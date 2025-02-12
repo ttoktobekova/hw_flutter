@@ -12,6 +12,10 @@ class CalculatorScreen extends StatefulWidget {
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
   var screenValue = '';
+  var firstValue = '';
+  var secondValue = '';
+  var result = '';
+  var operation = '';
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +34,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       right: 1,
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 35),
-                        child: Text(
-                          screenValue,
-                          style: TextStyle(
-                              fontSize: 56,
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold),
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width - 40,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Column(
+                              children: [
+                                Text(
+                                  screenValue,
+                                  style: TextStyle(
+                                      fontSize: 56,
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -63,7 +77,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           color: AppColors.grey,
                           onTap: () {
                             setState(() {
-                              if (screenValue.isNotEmpty) {
+                              if (screenValue.isNotEmpty &&
+                                  screenValue != '0') {
                                 if (screenValue.startsWith('-')) {
                                   screenValue = screenValue.substring(1);
                                 } else {
@@ -78,8 +93,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           text: "%",
                           color: AppColors.grey,
                           onTap: () {
+                            operation = '%';
                             setState(() {
-                              screenValue = '%';
+                              firstValue = screenValue;
+                              screenValue = '';
                             });
                           },
                         ),
@@ -88,8 +105,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           text: "÷",
                           color: AppColors.orange,
                           onTap: () {
+                            operation = '/';
                             setState(() {
-                              screenValue = '÷';
+                              firstValue = screenValue;
+                              screenValue = '';
                             });
                           },
                         ),
@@ -136,8 +155,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           text: "×",
                           color: AppColors.orange,
                           onTap: () {
+                            operation = '*';
                             setState(() {
-                              screenValue = '×';
+                              firstValue = screenValue;
+                              screenValue = '';
                             });
                           },
                         ),
@@ -180,7 +201,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           },
                         ),
                         const SizedBox(width: 10),
-                        CalculatorButton(text: "-", color: AppColors.orange),
+                        CalculatorButton(
+                          text: "-",
+                          color: AppColors.orange,
+                          onTap: () {
+                            operation = '-';
+                            setState(() {
+                              firstValue = screenValue;
+                              screenValue = '';
+                            });
+                          },
+                        ),
                         const SizedBox(width: 10),
                       ],
                     ),
@@ -224,8 +255,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           text: "+",
                           color: AppColors.orange,
                           onTap: () {
+                            operation = '+';
                             setState(() {
-                              screenValue += '+';
+                              firstValue = screenValue;
+                              screenValue = '';
                             });
                           },
                         ),
@@ -250,20 +283,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                         CalculatorButton(
                           text: ".",
                           color: AppColors.grayClose,
-                          onTap: () {
-                            setState(() {
-                              screenValue += '.';
-                            });
-                          },
+                          onTap: addDecimalPoint,
                         ),
                         const SizedBox(width: 10),
                         CalculatorButton(
                           text: "=",
                           color: AppColors.orange,
                           onTap: () {
-                            setState(() {
-                              screenValue += '=';
-                            });
+                            operatorIn();
                           },
                         ),
                       ],
@@ -277,7 +304,74 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         ));
   }
 
+  void operatorIn() {
+    setState(() {
+      secondValue = screenValue;
+      switch (operation) {
+        case '+':
+          addOperation();
+          break;
+        case '*':
+          multiplicationOperator();
+          break;
+        case '-':
+          subtractionOperator();
+          break;
+        case '/':
+          divisionOperator();
+          break;
+        case '%':
+          percentOperator();
+      }
+      screenValue = result;
+    });
+  }
+
+  void percentOperator() {
+    result = ((double.tryParse(firstValue) ?? 0) *
+            (double.tryParse(secondValue) ?? 0) /
+            100)
+        .toString();
+  }
+
+  void multiplicationOperator() {
+    result = ((double.tryParse(firstValue) ?? 0) *
+            (double.tryParse(secondValue) ?? 0))
+        .toString();
+  }
+
+  void subtractionOperator() {
+    result = ((double.tryParse(firstValue) ?? 0) -
+            (double.tryParse(secondValue) ?? 0))
+        .toString();
+  }
+
+  void divisionOperator() {
+    double denominator = double.tryParse(secondValue) ?? 0;
+    if (denominator == 0) {
+      result = 'Ошибка';
+    } else {
+      result = ((double.tryParse(firstValue) ?? 0) / denominator).toString();
+    }
+  }
+
+  void addOperation() {
+    result = ((double.tryParse(firstValue) ?? 0) +
+            (double.tryParse(secondValue) ?? 0))
+        .toString();
+  }
+
   void contentZero() {
     screenValue = screenValue == '0' ? '' : screenValue;
+  }
+
+  void addDecimalPoint() {
+    setState(() {
+      if (screenValue.isEmpty) {
+        screenValue = '0.'; // Добавляем "0." если строка пуста
+      } else if (!screenValue.contains('.')) {
+        screenValue += '.'; // Добавляем точку, если её ещё нет
+      }
+    });
   }
 }
